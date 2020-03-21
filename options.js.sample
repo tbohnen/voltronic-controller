@@ -1,0 +1,11 @@
+const options = {
+    "server": "localhost",
+    "port": "1883",
+    rawTopic: "homeassistant/sensor/voltronic",
+    commandsTopic: "voltronic-controller",
+    "username": "",
+    "password": "",
+    publishStatusSeconds: 30
+}
+
+module.exports = options
