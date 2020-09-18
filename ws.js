@@ -2,10 +2,21 @@ const http = require('http');
 const WebSocket = require('ws');
 const { executeRaw, getStatus, emitter } = require('./commands')
 
+const wsTypes = { STATUS: "status", SENSOR: "sensor" }
+
 const connections = []
 
+emitter.on("sensor", (sensor) => {
+    for (var connection of connections) {
+	    try {
+        ws.send(JSON.stringify({ type: wsTypes.SENSOR, data: sensor }));
+	    } catch (e) {
+		    console.error(e)
+	    }
+    }
+})
+
 emitter.on("status", (status) => {
-	console.log('received emitted status', status)
     for (var connection of connections) {
 	    try {
 		sendStatus(connection, status)
@@ -16,10 +27,6 @@ emitter.on("status", (status) => {
 })
 
 const wss = new WebSocket.Server({ port: 8999 });
-
-const wsTypes = {
-    STATUS: "status"
-}
 
 
 wss.on('close', (ws) => {
