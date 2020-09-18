@@ -1,6 +1,6 @@
 var mqtt = require('mqtt')
 const options = require('./options')
-const { emitter } = require('./commands')
+const sensors = require('./sensors)
 
 const publish = (topic, msg) => {
 	client.publish(topic, msg)
@@ -29,9 +29,7 @@ const init = () => {
 
 	client.on('message', function (topic, message) {
 	  const sensor = options.mqttSensors.find( s => s.topic === topic.split('/')[0])
-
-		console.log(`incoming mqtt message: ${topic} ${message}`, sensor)
-	  emitter.emit('sensor', { sensor, topic, message })
+    sensors.update(sensor, topic, message)
 	})
 }
 
