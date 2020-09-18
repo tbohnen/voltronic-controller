@@ -22,6 +22,15 @@ const wsTypes = {
 }
 
 
+wss.on('close', (ws) => {
+    console.log('socket disconnected')
+    const index = connections.findIndex(c => c === ws);
+    if (index > -1) {
+	    connections.splice(index, 1);
+	    console.log(`removed connection, remaining ${connections.length}`)
+    }
+})
+
 wss.on('connection', async (ws) => {
     connections.push(ws)
 
@@ -47,7 +56,6 @@ wss.on('connection', async (ws) => {
             }
         }
 
-        //log the received message and send it back to the client
         console.log('received: %s', message);
     });
 });
@@ -57,7 +65,7 @@ const sendStatus = async (ws, status) => {
         console.log('sending from emitter', status)
         ws.send(JSON.stringify({ type: wsTypes.STATUS, data: status }));
     } else {
-        const status = await getStatus();
+        const status = await getStatus(true);
         console.log('sending on request', status)
         ws.send(JSON.stringify({ type: wsTypes.STATUS, data: status }));
     }
