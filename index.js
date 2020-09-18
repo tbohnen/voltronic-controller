@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 const { executeRaw, getStatus } = require('./commands')
 const mqtt = require('./mqtt')
+const ws = require('./ws')
 
 app.use(express.json());
  
