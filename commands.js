@@ -1,4 +1,7 @@
 const { exec } = require('child_process');
+const { EventEmitter } = require("events");
+const emitter = new EventEmitter();
+const options = require('./options')
 
 const executeRaw = (cmd) => {
 	console.log('executing', cmd);
@@ -23,7 +26,6 @@ const executeRaw = (cmd) => {
 
 const status = null
 
-
 const getStatus = (cached = true) => {
 	return new Promise((resolve, reject) => { 
 		if (cached && status) {
@@ -45,6 +47,13 @@ const getStatus = (cached = true) => {
 		});
 	});
 }
+
+const publishStatus = async () => {
+	const status = await getStatus(false)
+	emitter.emit("status", status);
+}
+
+setInterval(publishStatus, options.publishStatusSeconds * 1000);
 
 module.exports = {
 	executeRaw,
