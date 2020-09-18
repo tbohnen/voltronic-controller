@@ -3,7 +3,8 @@ import config from '../../config'
 
 const wsTypes = {
     STATUS: "status",
-    SENSOR: "sensor"
+    SENSOR: "sensor",
+    COMMAND: "command"
 }
 
 const connectWs = (state, setState, sensors, setSensors) => {
@@ -17,7 +18,7 @@ const connectWs = (state, setState, sensors, setSensors) => {
 
     socket.addEventListener('open', function (event) {
         console.log('ws open')
-        setState({ ...state, connected: true })
+        setState({ ...state, socket })
         socket.send(JSON.stringify({ type: wsTypes.STATUS }));
     });
 
@@ -29,7 +30,7 @@ const connectWs = (state, setState, sensors, setSensors) => {
             case wsTypes.STATUS: {
                 console.log('setting status', parsed.data)
                 console.log('state', state)
-                setState({ connected: true, status: parsed.data })
+                setState({ socket, status: parsed.data })
                 break;
             }
             case wsTypes.SENSOR: {
@@ -49,12 +50,12 @@ const connectWs = (state, setState, sensors, setSensors) => {
 
 
 const Dashboard = (props) => {
-    const [state, setState] = useState({ connected: false, status: {} })
+    const [state, setState] = useState({ socket: null, status: {} })
     const [sensors, setSensors] = useState([ ])
     console.log(state)
 
     useEffect(() => {
-        if (!state.connected) {
+        if (!state.socket) {
             console.log('connecting ws')
             connectWs(state, setState, sensors, setSensors)
         }
@@ -71,7 +72,21 @@ const Dashboard = (props) => {
 
 const renderSensors = (sensors) => {
     return (<div>
-        {sensors.map(s => <div>{JSON.stringify(s)}</div>)}
+        {sensors.map(s => <div>
+            Name: {s.name}
+            Power: {s.latestMessages["geyser/stat/POWER"]}
+            </div>)}
+    </div>)
+}
+
+const renderSendCommand = (socket) => {
+
+    const send = (value) => {
+        socket.send(JSON.stringify({ type: wsTypes.COMMAND, data: { command: "source", value } }));
+    }
+    return (<div>
+<button onClick={() => { send('solar') }}>Solar</button>
+<button onClick={() => { send('utility') }}>Utility</button>
     </div>)
 }
 
@@ -79,33 +94,34 @@ const renderVoltronic = (status) => {
     return (<div style={{ display: "grid", gridTemplateColumns: "auto auto auto auto" }}>
         <div>
             <h3>Battery</h3>
-            <div>Battery Charge current: {status.Battery_charge_current}</div>
-            <div>Battery Discharge current: {status.Battery_discharge_current}</div>
-            <div>Battery Capacity: {status.Battery_capacity}</div>
-            <div>Battery Voltage: {status.Battery_voltage}</div>
+            <div>Battery Charge current: {status.Battery_charge_current}A</div>
+            <div>Battery Discharge current: {status.Battery_discharge_current}A</div>
+            <div>Battery Capacity: {status.Battery_capacity}%</div>
+            <div>Battery Voltage: {status.Battery_voltage}V</div>
         </div>
         <div>
             <h3>PV</h3>
-            <div>PV in Watts: {status.PV_in_watts}</div>
+            <div>PV in Watts: {status.PV_in_watts}W</div>
         </div>
         <div>
             <h3>Load</h3>
-            <div>Load watt: {status.Load_watt}</div>
-            <div>Load watt hour: {status.Load_watthour}</div>
-            <div>Load %: {status.Load_pct}</div>
+            <div>Load watts: {status.Load_watt}W</div>
+            <div>Load whs: {status.Load_watthour}W/H</div>
+            <div>Load: {status.Load_pct}%</div>
         </div>
         <div>
             <h3>Misc</h3>
-            <div>Inverter mode (3=grid,1=solar,0) {status.Inverter_mode} </div>
+            <div>Inverter mode (3=grid,4=solar,0) {status.Inverter_mode} </div>
             <div>Grid Voltage {status.AC_grid_voltage} </div>
         </div>
     </div>)
 }
 
     return (<div>
-        <h3>Status: {state && state.connected ? state.connected.toString() : "false"} ({state.status && new Date(state.status.time).toLocaleString()})</h3>
+        <h3>Status: {state && state.socket ? state.socket.readyState : "N/A"} ({state.status && new Date(state.status.time).toLocaleString()})</h3>
         { state.status && renderVoltronic(state.status) }
         { sensors && renderSensors(sensors) }
+        { renderSendCommand(state.socket) }
         
         </div>)
 }
