@@ -1,3 +1,3 @@
 export default {
-    serverUrl: process.env.REACT_APP_SERVER_URL
+    wsUrl: process.env.REACT_APP_WS_URL
 }

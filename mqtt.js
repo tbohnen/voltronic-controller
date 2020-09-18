@@ -2,15 +2,17 @@ var mqtt = require('mqtt')
 const { executeRaw, getStatus } = require('./commands')
 const options = require('./options')
 
+const { EventEmitter } = require("events");
+const emitter = new EventEmitter();
 
 
 const publish = (topic, msg) => {
     client.publish(topic, msg)
 }
 
-
-const publishStatus = async () => {
-	const status = await getStatus()
+const publishStatus = async (cached = true) => {
+	const status = await getStatus(cached)
+	emitter.emit("status", status);
 
 	for (const key of Object.keys(status)){
 		const value = status[key];
@@ -105,7 +107,7 @@ const registerTopics = () => {
 }
 
 const init = () => {
-	setInterval(publishStatus, options.publishStatusSeconds*1000);
+	setInterval(() => publishStatus(false), options.publishStatusSeconds*1000);
 
 
 	console.log('client connecting')

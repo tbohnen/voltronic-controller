@@ -2,13 +2,23 @@ const http = require('http');
 const WebSocket = require('ws');
 const { executeRaw, getStatus } = require('./commands')
 
+const { EventEmitter } = require("events");
+const emitter = new EventEmitter();
+
+const connections = []
+
+emitter.on("status", (status) => {
+    for (var connection of connections) {
+        sendStatus(connection, status)
+    }
+})
+
 const wss = new WebSocket.Server({ port: 8999 });
 
 const wsTypes = {
     STATUS: "status"
 }
 
-const connections = []
 
 wss.on('connection', async (ws) => {
     connections.push(ws)
@@ -29,8 +39,13 @@ wss.on('connection', async (ws) => {
     });
 });
 
-const sendStatus = async (ws) => {
-    const status = await getStatus();
-    console.log('sending', status)
-    ws.send(JSON.stringify({ type: wsTypes.STATUS, data: status }));
+const sendStatus = async (ws, status) => {
+    if (status) {
+        console.log('sending', status)
+        ws.send(JSON.stringify({ type: wsTypes.STATUS, data: status }));
+    } else {
+        const status = await getStatus();
+        console.log('sending', status)
+        ws.send(JSON.stringify({ type: wsTypes.STATUS, data: status }));
+    }
 }

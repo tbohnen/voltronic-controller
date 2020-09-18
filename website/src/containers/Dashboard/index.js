@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-//import config from '../config'
+import config from '../../config'
 
 const wsTypes = {
     STATUS: "status"
@@ -12,7 +12,7 @@ const Dashboard = (props) => {
 
     const connectWs = () => {
         console.log('connect ws')
-        const socket = new WebSocket('ws://localhost:8999');
+        const socket = new WebSocket(config.wsUrl);
 
         socket.addEventListener('open', function (event) {
             console.log('ws open')
