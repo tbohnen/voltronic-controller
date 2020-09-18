@@ -1,6 +1,6 @@
 var mqtt = require('mqtt')
 const options = require('./options')
-const sensors = require('./sensors)
+const sensors = require('./sensors')
 
 const publish = (topic, msg) => {
 	client.publish(topic, msg)
