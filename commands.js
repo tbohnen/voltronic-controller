@@ -40,7 +40,8 @@ const getStatus = (cached = true) => {
 		    // node couldn't execute the command
 		    return;
 		  }
-		  const status = { time: Date.now(), ...JSON.parse(stdout) }
+		  const date = new Date();
+		  const status = { time: date.toISOString(), ...JSON.parse(stdout) }
 
 		resolve(status);
 		if (stderr) reject(stderr);
@@ -50,6 +51,7 @@ const getStatus = (cached = true) => {
 
 const publishStatus = async () => {
 	const status = await getStatus(false)
+	console.log('latest status', status);
 	emitter.emit("status", status);
 }
 
@@ -57,5 +59,6 @@ setInterval(publishStatus, options.publishStatusSeconds * 1000);
 
 module.exports = {
 	executeRaw,
-	getStatus
+	getStatus,
+	emitter
 }

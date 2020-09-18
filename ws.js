@@ -1,15 +1,17 @@
 const http = require('http');
 const WebSocket = require('ws');
-const { executeRaw, getStatus } = require('./commands')
-
-const { EventEmitter } = require("events");
-const emitter = new EventEmitter();
+const { executeRaw, getStatus, emitter } = require('./commands')
 
 const connections = []
 
 emitter.on("status", (status) => {
+	console.log('received emitted status', status)
     for (var connection of connections) {
-        sendStatus(connection, status)
+	    try {
+		sendStatus(connection, status)
+	    } catch (e) {
+		    console.error(e)
+	    }
     }
 })
 
@@ -22,7 +24,18 @@ const wsTypes = {
 
 wss.on('connection', async (ws) => {
     connections.push(ws)
+
+    console.log(`ws connected, open: ${connections.length}`)
     await sendStatus(ws)
+
+    ws.on('close', () => {
+	    console.log('socket disconnected')
+	    const index = connections.findIndex(c => c === ws);
+	    if (index > -1) {
+		    connections.splice(index, 1);
+		    console.log(`removed connection, remaining ${connections.length}`)
+	    }
+    })
 
     ws.on('message', async (message) => {
         const msg = JSON.parse(message)
@@ -41,11 +54,11 @@ wss.on('connection', async (ws) => {
 
 const sendStatus = async (ws, status) => {
     if (status) {
-        console.log('sending', status)
+        console.log('sending from emitter', status)
         ws.send(JSON.stringify({ type: wsTypes.STATUS, data: status }));
     } else {
         const status = await getStatus();
-        console.log('sending', status)
+        console.log('sending on request', status)
         ws.send(JSON.stringify({ type: wsTypes.STATUS, data: status }));
     }
 }
