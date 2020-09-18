@@ -31,7 +31,7 @@ const init = () => {
 	  const sensor = options.mqttSensors.find( s => s.topic === topic.split('/')[0])
 
 		console.log(`incoming mqtt message: ${topic} ${message}`, sensor)
-	  emitter.emit('sensor', { sensor, topic, message })
+	  emitter.emit('sensor', { sensor, topic, message: message.toString('utf-8') })
 	})
 }
 

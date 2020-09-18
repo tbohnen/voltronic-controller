@@ -9,7 +9,7 @@ const connections = []
 emitter.on("sensor", (sensor) => {
     for (var connection of connections) {
 	    try {
-        ws.send(JSON.stringify({ type: wsTypes.SENSOR, data: sensor }));
+		connection.send(JSON.stringify({ type: wsTypes.SENSOR, data: sensor }));
 	    } catch (e) {
 		    console.error(e)
 	    }
@@ -69,11 +69,9 @@ wss.on('connection', async (ws) => {
 
 const sendStatus = async (ws, status) => {
     if (status) {
-        console.log('sending from emitter', status)
         ws.send(JSON.stringify({ type: wsTypes.STATUS, data: status }));
     } else {
         const status = await getStatus(true);
-        console.log('sending on request', status)
         ws.send(JSON.stringify({ type: wsTypes.STATUS, data: status }));
     }
 }
