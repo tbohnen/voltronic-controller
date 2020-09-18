@@ -24,7 +24,7 @@ const executeRaw = (cmd) => {
 	});
 }
 
-const status = null
+let status = null
 
 const getStatus = (cached = true) => {
 	return new Promise((resolve, reject) => { 
@@ -41,10 +41,10 @@ const getStatus = (cached = true) => {
 		    return;
 		  }
 		  const date = new Date();
-		  const status = { time: date.toISOString(), ...JSON.parse(stdout) }
+		  status = { time: date.toISOString(), ...JSON.parse(stdout) }
 
-		resolve(status);
-		if (stderr) reject(stderr);
+	          resolve(status);
+                  if (stderr) reject(stderr);
 		});
 	});
 }
