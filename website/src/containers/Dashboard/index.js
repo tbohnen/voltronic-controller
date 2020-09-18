@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react'
 import config from '../../config'
 
 const wsTypes = {
-    STATUS: "status"
+    STATUS: "status",
+    SENSOR: "sensor"
 }
 
-const connectWs = (state, setState) => {
+const connectWs = (state, setState, sensors, setSensors) => {
     console.log('connect ws')
     const socket = new WebSocket(config.wsUrl);
 
@@ -29,6 +30,18 @@ const connectWs = (state, setState) => {
                 console.log('setting status', parsed.data)
                 console.log('state', state)
                 setState({ connected: true, status: parsed.data })
+                break;
+            }
+            case wsTypes.SENSOR: {
+                console.log('sensor data', parsed)
+                const index = sensors.findIndex(s => s.topic === parsed.data.topic)
+                if (index > -1) {
+                    sensors[index] = parsed.data
+                    setSensors([...sensors])
+                } else {
+                    setSensors([...sensors, parsed.data])
+                }
+                break;
             }
         }
     });
@@ -37,12 +50,13 @@ const connectWs = (state, setState) => {
 
 const Dashboard = (props) => {
     const [state, setState] = useState({ connected: false, status: {} })
+    const [sensors, setSensors] = useState([ ])
     console.log(state)
 
     useEffect(() => {
         if (!state.connected) {
             console.log('connecting ws')
-            connectWs(state, setState)
+            connectWs(state, setState, sensors, setSensors)
         }
     })
 
@@ -54,6 +68,12 @@ const Dashboard = (props) => {
 // Battery_discharge_current: 0 // Load_status_on: 1 // SCC_charge_on: 0 // AC_charge_on: 1 // Battery_recharge_voltage: 47
 // Battery_under_voltage: 47 // Battery_bulk_voltage: 53.2 // Battery_float_voltage: 53.2 // Max_grid_charge_current: 2 // Max_charge_current: 30
 // Out_source_priority: 2 // Charger_source_priority: 2 // Battery_redischarge_voltage: 0 // Warnings: 100000000000001000000000000000010000
+
+const renderSensors = (sensors) => {
+    return (<div>
+        {sensors.map(s => <div>{JSON.stringify(s)}</div>)}
+    </div>)
+}
 
 const renderVoltronic = (status) => {
     return (<div style={{ display: "grid", gridTemplateColumns: "auto auto auto auto" }}>
@@ -84,9 +104,10 @@ const renderVoltronic = (status) => {
 
     return (<div>
         <h3>Status: {state && state.connected ? state.connected.toString() : "false"} ({state.status && new Date(state.status.time).toLocaleString()})</h3>
-        {
-            state.status && renderVoltronic(state.status)
-        }</div>)
+        { state.status && renderVoltronic(state.status) }
+        { sensors && renderSensors(sensors) }
+        
+        </div>)
 }
 
 export default Dashboard
