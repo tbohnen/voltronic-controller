@@ -3,7 +3,9 @@ const options = require('./options')
 const sensors = require('./sensors')
 
 const publish = (topic, msg) => {
-	client.publish(topic, msg)
+	console.log(`publishing ${topic}`, msg)
+	if (msg) { client.publish(topic, msg) }
+	else { client.publish(topic) }
 }
 
 let client
@@ -22,6 +24,9 @@ const init = () => {
 		 	      if (err) { console.log('could not subscribe', err); }
 		 	  else {
 					console.log('subscribed', sensor.topic);
+				  if (sensor.type === "POWR2") {
+					  publish(`${sensor.topic}/stat/POWER`, "")
+				  }
 		 	  }
 		  })
 		})
@@ -29,7 +34,7 @@ const init = () => {
 
 	client.on('message', function (topic, message) {
 	  const sensor = options.mqttSensors.find( s => s.topic === topic.split('/')[0])
-    sensors.update(sensor, topic, message)
+	    sensors.update(sensor, topic, message)
 	})
 }
 

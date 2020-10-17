@@ -57,7 +57,43 @@ const publishStatus = async () => {
 
 setInterval(publishStatus, options.publishStatusSeconds * 1000);
 
+const toggleSource = async (source) => {
+	let code = "";
+
+	if (source === "solar"){
+		code = "02";
+	} else if (source === "utility") {
+		code = "00";
+	}
+
+	console.log('switching source to', source)
+
+  const outcome2 = await executeRaw(`POP${code}`);
+  await sleepMs(2000);
+  const outcome1 = await executeRaw(`PCP${code}`);
+}
+
+const execute = async (command, value) => {
+	console.log(`executing command: ${command}, value: ${value}`);
+	switch (command) {
+		case "source": {
+			await toggleSource(value)
+     break;
+    }
+    case "mqtt": {
+      await publishMqttCommand(value)
+    }
+	}
+}
+
+const sleepMs = (ms) => {
+	return new Promise((resolve, reject) => {
+		setTimeout(() => resolve(), ms);
+	});
+}
+
 module.exports = {
+	execute,
 	executeRaw,
 	getStatus,
 	emitter

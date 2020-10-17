@@ -1,8 +1,9 @@
 const http = require('http');
 const WebSocket = require('ws');
-const { executeRaw, getStatus, emitter } = require('./commands')
+const { execute, executeRaw, getStatus, emitter } = require('./commands')
+const { sensors } = require('./sensors')
 
-const wsTypes = { STATUS: "status", SENSOR: "sensor" }
+const wsTypes = { STATUS: "status", SENSOR: "sensor", COMMAND: "command" }
 
 const connections = []
 
@@ -43,6 +44,7 @@ wss.on('connection', async (ws) => {
 
     console.log(`ws connected, open: ${connections.length}`)
     await sendStatus(ws)
+    sendAllSensors(ws)
 
     ws.on('close', () => {
 	    console.log('socket disconnected')
@@ -55,17 +57,27 @@ wss.on('connection', async (ws) => {
 
     ws.on('message', async (message) => {
         const msg = JSON.parse(message)
+	    console.log('incoming', msg)
 
         switch (msg.type) {
             case wsTypes.STATUS: {
                 await sendStatus(ws)
                 break;
             }
+	    case wsTypes.COMMAND: {
+	        await execute(msg.data.command, msg.data.value)
+	    }
         }
 
         console.log('received: %s', message);
     });
 });
+
+const sendAllSensors = (ws) => {
+	sensors.forEach(s => {
+		ws.send(JSON.stringify({ type: wsTypes.SENSOR, data: s }));
+	})
+}
 
 const sendStatus = async (ws, status) => {
     if (status) {

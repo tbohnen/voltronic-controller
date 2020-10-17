@@ -3,6 +3,7 @@ const app = express()
 const { executeRaw, getStatus } = require('./commands')
 const mqtt = require('./mqtt')
 const ws = require('./ws')
+const rules = require('./rules')
 
 app.use(express.json());
  
@@ -37,7 +38,6 @@ app.post('/source', async function(req, res) {
 });
 
 app.listen(3000)
-
 
 getStatus().then(s => console.log('status', s));
 

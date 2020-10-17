@@ -9,8 +9,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bent": "^7.3.10",
     "express": "^4.17.1",
+    "local-storage": "^2.0.0",
     "mqtt": "^3.0.0",
+    "nedb": "^1.8.0",
     "ws": "^7.3.1"
   }
 }

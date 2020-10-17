@@ -1,8 +1,9 @@
 const { emitter } = require('./commands')
 const options = require('./options')
-const sensors = options.mqttSensors.map(s => ({ ...s, latestMessages: { }, power: null ))
+const sensors = options.mqttSensors.map(s => ({ ...s, latestMessages: { }, power: null }))
 
-const update = (incomingSensor, topic, message) => {
+const update = (incomingSensor, topic, messageBuffer) => {
+    const message = messageBuffer.toString('utf-8')
     const index = sensors.findIndex(s => s.name == incomingSensor.name)
     const sensor = sensors[index]
     if (!sensor) {
@@ -18,7 +19,7 @@ const update = (incomingSensor, topic, message) => {
       switch (topicSplit[2]) {
         case "SENSOR": {
           const parsed = JSON.parse(message)
-          sensor.power = parsed.Power && Number(parsed.Power) === 1 ? "On" else "Off"
+          sensor.power = parsed.Power && Number(parsed.Power) === 1 ? "On" : "Off"
           break;
         }
       }
@@ -27,7 +28,6 @@ const update = (incomingSensor, topic, message) => {
 
       console.log(`incoming mqtt message: ${topic} ${message}`, sensor)
       emitter.emit('sensor', sensor)
-    }
 }
 
 
