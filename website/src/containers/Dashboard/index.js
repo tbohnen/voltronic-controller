@@ -81,12 +81,13 @@ const sendMqtt = (topic, msg, socket) => {
 
 
 const renderSensors = (sensors, socket) => {
-    return (<div>
-        {sensors.map(s => <div>
-            Name: {s.name}
-            Power: {s.latestMessages["geyser/stat/POWER"]}
-            <button onClick={() => { sendMqtt('geyser/cmnd/Power', 'TOGGLE', socket) } }>Toggle</button>
-            </div>)}
+    return (<div style={{display: "grid", gridTemplateColumns: "auto auto auto" }}>
+        <h3>Sensors</h3>
+        {sensors.map(s => <>
+            <div>Name: {s.name}</div>
+            <div>Power: {s.latestMessages[`${s.topic}/stat/POWER`]}</div>
+            <div><button onClick={() => { sendMqtt(`${s.topic}/cmnd/Power`, 'TOGGLE', socket) } }>Toggle</button></div>
+            </>)}
     </div>)
 }
 
@@ -125,13 +126,16 @@ const renderVoltronic = (status) => {
     </div>)
 }
 
-    return (<div>
+    return (
+<div>
+<div>
         <h3>Status: {state && state.socket ? state.socket.readyState : "N/A"} ({state.status && new Date(state.status.time).toLocaleString()})</h3>
-        { state.status && renderVoltronic(state.status) }
-        { sensors && renderSensors(sensors, state.socket) }
-        { renderSendCommand(state.socket) }
-        
-        </div>)
+        <div>{ renderSendCommand(state.socket) }</div>
+</div>
+        <div style={{ display: "grid", gridTemplateColumns: "70% 30%" }}>
+          { state.status && renderVoltronic(state.status) }
+          { sensors && renderSensors(sensors, state.socket) }
+        </div></div>)
 }
 
 export default Dashboard
