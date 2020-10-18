@@ -2,8 +2,9 @@ const http = require('http');
 const WebSocket = require('ws');
 const { execute, executeRaw, getStatus, emitter } = require('./commands')
 const { sensors } = require('./sensors')
+const { publish } = require('./mqtt')
 
-const wsTypes = { STATUS: "status", SENSOR: "sensor", COMMAND: "command" }
+const wsTypes = { STATUS: "status", SENSOR: "sensor", COMMAND: "command", MQTT: "mqtt" }
 
 const connections = []
 
@@ -64,9 +65,13 @@ wss.on('connection', async (ws) => {
                 await sendStatus(ws)
                 break;
             }
-	    case wsTypes.COMMAND: {
-	        await execute(msg.data.command, msg.data.value)
-	    }
+            case wsTypes.MQTT: {
+            await publish(msg.data.topic, msg.data.msg)
+            break;
+            }
+            case wsTypes.COMMAND: {
+            await execute(msg.data.command, msg.data.value)
+            }
         }
 
         console.log('received: %s', message);

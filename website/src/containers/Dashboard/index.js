@@ -4,7 +4,8 @@ import config from '../../config'
 const wsTypes = {
     STATUS: "status",
     SENSOR: "sensor",
-    COMMAND: "command"
+    COMMAND: "command",
+    MQTT: "mqtt"
 }
 
 const connectWs = (state, setState, sensors, setSensors) => {
@@ -70,23 +71,30 @@ const Dashboard = (props) => {
 // Battery_under_voltage: 47 // Battery_bulk_voltage: 53.2 // Battery_float_voltage: 53.2 // Max_grid_charge_current: 2 // Max_charge_current: 30
 // Out_source_priority: 2 // Charger_source_priority: 2 // Battery_redischarge_voltage: 0 // Warnings: 100000000000001000000000000000010000
 
-const renderSensors = (sensors) => {
+const sendCommand = (value, command, socket) => {
+  socket.send(JSON.stringify({ type: wsTypes.COMMAND, data: { command, value } }));
+}
+
+const sendMqtt = (topic, msg, socket) => {
+  socket.send(JSON.stringify({ type: wsTypes.MQTT, data: { topic, msg } }));
+}
+
+
+const renderSensors = (sensors, socket) => {
     return (<div>
         {sensors.map(s => <div>
             Name: {s.name}
             Power: {s.latestMessages["geyser/stat/POWER"]}
+            <button onClick={() => { sendMqtt('geyser/cmnd/Power', 'TOGGLE', socket) } }>Toggle</button>
             </div>)}
     </div>)
 }
 
 const renderSendCommand = (socket) => {
 
-    const send = (value) => {
-        socket.send(JSON.stringify({ type: wsTypes.COMMAND, data: { command: "source", value } }));
-    }
     return (<div>
-<button onClick={() => { send('solar') }}>Solar</button>
-<button onClick={() => { send('utility') }}>Utility</button>
+<button onClick={() => { sendCommand('solar', 'source',socket) }}>Solar</button>
+<button onClick={() => { sendCommand('utility', 'source', socket) }}>Utility</button>
     </div>)
 }
 
@@ -120,7 +128,7 @@ const renderVoltronic = (status) => {
     return (<div>
         <h3>Status: {state && state.socket ? state.socket.readyState : "N/A"} ({state.status && new Date(state.status.time).toLocaleString()})</h3>
         { state.status && renderVoltronic(state.status) }
-        { sensors && renderSensors(sensors) }
+        { sensors && renderSensors(sensors, state.socket) }
         { renderSendCommand(state.socket) }
         
         </div>)
