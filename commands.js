@@ -69,8 +69,10 @@ const toggleSource = async (source) => {
 	console.log('switching source to', source)
 
   const outcome2 = await executeRaw(`POP${code}`);
+  console.log('POP outcome', outcome2)
   await sleepMs(2000);
   const outcome1 = await executeRaw(`PCP${code}`);
+  console.log('PCP outcome', outcome1)
 }
 
 const execute = async (command, value) => {

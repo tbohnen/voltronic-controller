@@ -5,7 +5,8 @@ const wsTypes = {
     STATUS: "status",
     SENSOR: "sensor",
     COMMAND: "command",
-    MQTT: "mqtt"
+    MQTT: "mqtt",
+    EVENT: "event"
 }
 
 const connectWs = (state, setState, sensors, setSensors) => {
@@ -28,6 +29,10 @@ const connectWs = (state, setState, sensors, setSensors) => {
         console.log('Message from server ', parsed);
 
         switch (parsed.type) {
+            case wsTypes.EVENT: {
+                console.log('event', parsed.data)
+                break;
+            }
             case wsTypes.STATUS: {
                 console.log('setting status', parsed.data)
                 console.log('state', state)
@@ -52,7 +57,7 @@ const connectWs = (state, setState, sensors, setSensors) => {
 
 const Dashboard = (props) => {
     const [state, setState] = useState({ socket: null, status: {} })
-    const [sensors, setSensors] = useState([ ])
+    const [sensors, setSensors] = useState({ })
     console.log(state)
 
     useEffect(() => {

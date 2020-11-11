@@ -4,7 +4,7 @@ const { execute, executeRaw, getStatus, emitter } = require('./commands')
 const { sensors } = require('./sensors')
 const { publish } = require('./mqtt')
 
-const wsTypes = { STATUS: "status", SENSOR: "sensor", COMMAND: "command", MQTT: "mqtt" }
+const wsTypes = { STATUS: "status", SENSOR: "sensor", COMMAND: "command", MQTT: "mqtt", QUERY: "query", EVENT: "event" }
 
 const connections = []
 
@@ -12,6 +12,16 @@ emitter.on("sensor", (sensor) => {
     for (var connection of connections) {
 	    try {
 		connection.send(JSON.stringify({ type: wsTypes.SENSOR, data: sensor }));
+	    } catch (e) {
+		    console.error(e)
+	    }
+    }
+})
+
+emitter.on("event", (event) => {
+    for (var connection of connections) {
+	    try {
+		connection.send(JSON.stringify({ type: wsTypes.EVENT, data: event }));
 	    } catch (e) {
 		    console.error(e)
 	    }
@@ -66,11 +76,15 @@ wss.on('connection', async (ws) => {
                 break;
             }
             case wsTypes.MQTT: {
-            await publish(msg.data.topic, msg.data.msg)
+              await publish(msg.data.topic, msg.data.msg)
             break;
             }
             case wsTypes.COMMAND: {
-            await execute(msg.data.command, msg.data.value)
+              await execute(msg.data.command, msg.data.value)
+            break;
+            }
+            case wsTypes.QUERY: {
+            break;
             }
         }
 

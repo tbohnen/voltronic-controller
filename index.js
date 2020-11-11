@@ -4,8 +4,15 @@ const { executeRaw, getStatus } = require('./commands')
 const mqtt = require('./mqtt')
 const ws = require('./ws')
 const rules = require('./rules')
+const db = require('./db')
 
 app.use(express.json());
+
+app.get('/history', async function(req, res) {
+const result = await db.getSolar( {}, req.query.skip || 0, req.query.limit || 100 )
+  res.json(result).end()
+})
+
  
 app.get('/', async function (req, res) {
   const status = await getStatus();

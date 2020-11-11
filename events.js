@@ -1,6 +1,8 @@
+const { emitter } = require('./commands')
 
-const logEvent = (event) => {
-  console.log('event', event)
+const logEvent = (name, message) => {
+const event = { name, message }
+  emitter.emit('event', event)
 }
 
 const logError = (error, message) => {

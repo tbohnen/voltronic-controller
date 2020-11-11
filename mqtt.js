@@ -25,7 +25,10 @@ const init = () => {
 		 	  else {
 					console.log('subscribed', sensor.topic);
 				  if (sensor.type === "POWR2") {
-					  publish(`${sensor.topic}/stat/POWER`, "")
+					  publish(`${sensor.topic}/stat/POWER`)
+				  }
+				  if (sensor.type === "POW") {
+					  publish(`${sensor.topic}/stat/POWER`)
 				  }
 		 	  }
 		  })
