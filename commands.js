@@ -51,9 +51,10 @@ const getStatus = (cached = true) => {
 
 const publishStatus = async () => {
 	const status = await getStatus(false)
-	console.log('latest status', status);
 	emitter.emit("status", status);
 }
+
+
 
 setInterval(publishStatus, options.publishStatusSeconds * 1000);
 

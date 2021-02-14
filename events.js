@@ -1,7 +1,7 @@
 const { emitter } = require('./commands')
 
 const logEvent = (name, message) => {
-const event = { name, message }
+const event = { name, message, time: Date.now() }
   emitter.emit('event', event)
 }
 

@@ -5,6 +5,11 @@ const mqtt = require('./mqtt')
 const ws = require('./ws')
 const rules = require('./rules')
 const db = require('./db')
+const influxService = require('./influx')
+const weather = require('./weather')
+const cors = require('cors')
+
+app.use(cors())
 
 app.use(express.json());
 
@@ -13,6 +18,16 @@ const result = await db.getSolar( {}, req.query.skip || 0, req.query.limit || 10
   res.json(result).end()
 })
 
+
+app.get('/rules', async function(req, res) {
+  res.json(rules.status())
+})
+
+app.post('/rules', async function(req, res) {
+  const { enabled } = req.body
+  rules.toggleAllEnabled(enabled)
+  res.status(201).end()
+})
  
 app.get('/', async function (req, res) {
   const status = await getStatus();

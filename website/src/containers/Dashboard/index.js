@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import config from '../../config'
+import axios from 'axios'
 
 const wsTypes = {
     STATUS: "status",
@@ -9,61 +10,85 @@ const wsTypes = {
     EVENT: "event"
 }
 
-const connectWs = (state, setState, sensors, setSensors) => {
-    console.log('connect ws')
-    const socket = new WebSocket(config.wsUrl);
+//TODO: This is a hack ...
+const localSensors = { }
+const localEvents = []
 
-    socket.addEventListener('close', function () {
-        console.log('ws close')
-        setState({ connected: false })
-    });
 
-    socket.addEventListener('open', function (event) {
-        console.log('ws open')
-        setState({ ...state, socket })
-        socket.send(JSON.stringify({ type: wsTypes.STATUS }));
-    });
-
-    socket.addEventListener('message', function (event) {
-        const parsed = JSON.parse(event.data)
-        console.log('Message from server ', parsed);
-
-        switch (parsed.type) {
-            case wsTypes.EVENT: {
-                console.log('event', parsed.data)
-                break;
-            }
-            case wsTypes.STATUS: {
-                console.log('setting status', parsed.data)
-                console.log('state', state)
-                setState({ socket, status: parsed.data })
-                break;
-            }
-            case wsTypes.SENSOR: {
-                console.log('sensor data', parsed)
-                const index = sensors.findIndex(s => s.topic === parsed.data.topic)
-                if (index > -1) {
-                    sensors[index] = parsed.data
-                    setSensors([...sensors])
-                } else {
-                    setSensors([...sensors, parsed.data])
-                }
-                break;
-            }
-        }
-    });
+const toggleRulesEnabled = async (rulesEnabled, setRulesEnabled) => {
+  const res = await axios.post(`${config.httpUrl}/rules`, { enabled : !rulesEnabled })
+  setRulesEnabled(!rulesEnabled)
 }
-
 
 const Dashboard = (props) => {
     const [state, setState] = useState({ socket: null, status: {} })
     const [sensors, setSensors] = useState({ })
-    console.log(state)
+    const [events, setEvents] = useState([])
+    const socket = useRef(null);
+    const updateSensorInState = (sensor) => { 
+      localSensors[sensor.data.topic] = sensor.data
+      setSensors({ ...localSensors }) 
+    }
+
+    const [rulesEnabled, setRulesEnabled] = useState(false)
+
+
+useEffect(() => {
+    async function fetch() {
+    try {
+    const res = await axios(`${config.httpUrl}/rules`)
+    setRulesEnabled(res.data.enabled)
+    }
+    catch (e) {
+    console.error(e)
+    }
+    }
+    fetch()
+    return () => {}
+ }, [ rulesEnabled ])
 
     useEffect(() => {
-        if (!state.socket) {
-            console.log('connecting ws')
-            connectWs(state, setState, sensors, setSensors)
+        if (!socket.current) {
+
+        console.log('connecting ws')
+        socket.current = new WebSocket(config.wsUrl);
+        console.log('connect ws')
+
+        socket.current.addEventListener('close', function () {
+            console.log('ws close')
+            setState({ connected: false })
+            });
+
+        socket.current.addEventListener('open', function (event) {
+            console.log('ws open')
+            setState({ ...state, socket })
+            socket.current.send(JSON.stringify({ type: wsTypes.STATUS }));
+            });
+
+        socket.current.addEventListener('message', (event) => {
+            const parsed = JSON.parse(event.data)
+
+            switch (parsed.type) {
+            case wsTypes.EVENT: {
+            console.log('time', parsed)
+            const mapped = { ...parsed.data, time: new Date(parsed.data.time) }
+            localEvents.push(mapped)
+            setEvents([...localEvents])
+            break;
+            }
+            case wsTypes.STATUS: {
+            console.log('status', parsed)
+            setState({ status: parsed.data })
+            break;
+            }
+            case wsTypes.SENSOR: {
+            console.log('sensor', parsed)
+            updateSensorInState(parsed)
+
+              break;
+                                 }
+            }
+        });
         }
     })
 
@@ -84,14 +109,27 @@ const sendMqtt = (topic, msg, socket) => {
   socket.send(JSON.stringify({ type: wsTypes.MQTT, data: { topic, msg } }));
 }
 
+const renderEvents = (events) => {
+    return (<div style={{display: "grid", justifyItems: "start", gridTemplateColumns: "auto auto auto" }}>
+<div></div><div><h3>Events</h3></div><div></div>
+        {events.sort((a,b) => b.time && a.time && b.time.getTime() - a.time.getTime() ).map(e => <>
+            <div>Name: {e.name}</div>
+            <div>Time: {e.time && e.time.toLocaleString()}</div>
+            <div>Messsage: {e.message ? e.message.toString() : 'N/A'}</div>
+            </>)}
+    </div>)
+}
 
 const renderSensors = (sensors, socket) => {
-    return (<div style={{display: "grid", gridTemplateColumns: "auto auto auto" }}>
-        <h3>Sensors</h3>
-        {sensors.map(s => <>
+    return (<div style={{display: "grid", justifyItems: "start", gridTemplateColumns: "auto auto auto auto auto auto" }}>
+<div style={{gridColumn: "1/-1"}}><h3>Sensors</h3></div>
+        {Object.values(sensors).map(s => <>
             <div>Name: {s.name}</div>
             <div>Power: {s.latestMessages[`${s.topic}/stat/POWER`]}</div>
+            <div>Current: {s.current}</div>
+            <div>Today: {s.todayWatts}</div>
             <div><button onClick={() => { sendMqtt(`${s.topic}/cmnd/Power`, 'TOGGLE', socket) } }>Toggle</button></div>
+            <div><button onClick={() => { sendMqtt(`${s.topic}/cmnd/Power`, '', socket) } }>Query</button></div>
             </>)}
     </div>)
 }
@@ -99,13 +137,23 @@ const renderSensors = (sensors, socket) => {
 const renderSendCommand = (socket) => {
 
     return (<div>
-<button onClick={() => { sendCommand('solar', 'source',socket) }}>Solar</button>
-<button onClick={() => { sendCommand('utility', 'source', socket) }}>Utility</button>
+<button style={{padding: "1px" }} onClick={() => { sendCommand('solar', 'source',socket) }}>Solar</button>
+<button style={{padding: "1px" }} onClick={() => { sendCommand('utility', 'source', socket) }}>Utility</button>
     </div>)
 }
 
+const renderCurrentMode = (mode) => {
+  if (mode == 3) return "Utility" 
+  else if (mode == 4) return "Solar" 
+  else return mode
+}
+
+const renderRulesEnabled = (rulesEnabled, setRulesEnabled) => {
+  return (<div>Rules Enabled: <button onClick={() => toggleRulesEnabled(rulesEnabled, setRulesEnabled)}>{ rulesEnabled ? "Yes": "No" }</button></div>)
+}
+
 const renderVoltronic = (status) => {
-    return (<div style={{ display: "grid", gridTemplateColumns: "auto auto auto auto" }}>
+    return (<div style={{ display: "grid", gridTemplateColumns: "auto" }}>
         <div>
             <h3>Battery</h3>
             <div>Battery Charge current: {status.Battery_charge_current}A</div>
@@ -125,7 +173,7 @@ const renderVoltronic = (status) => {
         </div>
         <div>
             <h3>Misc</h3>
-            <div>Inverter mode (3=grid,4=solar,0) {status.Inverter_mode} </div>
+            <div>Inverter mode (3=grid,4=solar,0) { renderCurrentMode(status.Inverter_mode) } </div>
             <div>Grid Voltage {status.AC_grid_voltage} </div>
         </div>
     </div>)
@@ -135,11 +183,13 @@ const renderVoltronic = (status) => {
 <div>
 <div>
         <h3>Status: {state && state.socket ? state.socket.readyState : "N/A"} ({state.status && new Date(state.status.time).toLocaleString()})</h3>
-        <div>{ renderSendCommand(state.socket) }</div>
+        <div>{ renderSendCommand(socket.current) }</div>
+          { renderRulesEnabled(rulesEnabled, setRulesEnabled) }
 </div>
-        <div style={{ display: "grid", gridTemplateColumns: "70% 30%" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "auto auto auto" }}>
           { state.status && renderVoltronic(state.status) }
-          { sensors && renderSensors(sensors, state.socket) }
+          { sensors && renderSensors(sensors, socket.current) }
+          { events && renderEvents(events) }
         </div></div>)
 }
 

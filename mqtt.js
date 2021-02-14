@@ -3,7 +3,7 @@ const options = require('./options')
 const sensors = require('./sensors')
 
 const publish = (topic, msg) => {
-	console.log(`publishing ${topic}`, msg)
+	//console.log(`publishing ${topic}`, msg)
 	if (msg) { client.publish(topic, msg) }
 	else { client.publish(topic) }
 }
@@ -25,10 +25,10 @@ const init = () => {
 		 	  else {
 					console.log('subscribed', sensor.topic);
 				  if (sensor.type === "POWR2") {
-					  publish(`${sensor.topic}/stat/POWER`)
+					  publish(`${sensor.topic}/cmnd/POWER`, "")
 				  }
 				  if (sensor.type === "POW") {
-					  publish(`${sensor.topic}/stat/POWER`)
+					  publish(`${sensor.topic}/cmnd/POWER`, "")
 				  }
 		 	  }
 		  })
@@ -39,6 +39,13 @@ const init = () => {
 	  const sensor = options.mqttSensors.find( s => s.topic === topic.split('/')[0])
 	    sensors.update(sensor, topic, message)
 	})
+
+
+setInterval(() => {
+    publish(`tasmota/cmnd/POWER`, "")
+}, 60000)
+
+
 }
 
 module.exports = {
