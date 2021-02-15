@@ -2,6 +2,7 @@ var mqtt = require('mqtt')
 const options = require('./options')
 const sensors = require('./sensors')
 
+
 const publish = (topic, msg) => {
 	//console.log(`publishing ${topic}`, msg)
 	if (msg) { client.publish(topic, msg) }
@@ -11,6 +12,13 @@ const publish = (topic, msg) => {
 let client
 
 const init = () => {
+	if (!options.username) {
+		console.log("no username, not connecting mqtt")
+		return
+	}
+
+
+	
 	console.log('client connecting')
 	client = mqtt.connect(`mqtt://${options.server}:${options.port}`, {
 		"username": options.username,

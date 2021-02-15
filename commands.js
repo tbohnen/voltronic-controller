@@ -1,17 +1,12 @@
 const options = require('./options')
-const axpertCommands = require('./axpert-commands')
 
 if (!options.inverter || options.inverter === "AXPERT") {
+const axpertCommands = require('./axpert-commands')
   module.exports = axpertCommands
 }
 
-if (!options.inverter || options.inverter === "MUST") {
+if (options.inverter && options.inverter === "MUST") {
+const mustCommands = require('./must-commands')
   module.exports = mustCommands
 }
 
-module.exports = {
-	execute,
-	executeRaw,
-	getStatus,
-	emitter
-}

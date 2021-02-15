@@ -9,6 +9,7 @@ schema: [
 measurement: 'status',
 fields: {
 time: Influx.FieldType.INTEGER,
+	type: Influx.FieldType.STRING,
 Inverter_mode: Influx.FieldType.INTEGER,
 AC_grid_voltage: Influx.FieldType.FLOAT,
 AC_grid_frequency: Influx.FieldType.FLOAT,
@@ -76,7 +77,9 @@ time: Influx.FieldType.INTEGER,
 })
 
 const save = (measurement, data) => {
+	console.log('writing influx', measurement)
   influx.writePoints([ { measurement, fields: data, }] )
+	console.log('done writing influx', measurement)
 }
 
 emitter.on("weather", (weather) => {

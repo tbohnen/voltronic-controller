@@ -2,6 +2,8 @@ const axios = require('axios')
 const { weatherApiKey } = require('./options')
 const { emitter } = require('./commands')
 
+if (!weatherApiKey) return
+
 const get = async () => {
 const url =  `https://api.openweathermap.org/data/2.5/weather?q=johannesburg&appid=${weatherApiKey}&units=metric`
   const response = await axios.get(url)

@@ -2,6 +2,10 @@ const Datastore = require('nedb')
 const config = require('./options')
 const { emitter } = require('./commands')
 
+if (!config.db) {
+	return
+}
+
 const solarDb = new Datastore({ filename: config.db.solarDbPath, autoload: false, timestampData: true, onload: function(err) { if (err) console.log('error loading solar db', err); else console.log('loaded solar db'); } });
 const sensorsDb = new Datastore({ filename: config.db.sensorDbPath, autoload: false, timestampData: true, onload: function(err) { if (err) console.log('error loading solar db', err); else console.log('loaded sensors'); } });
 const eventsDb = new Datastore({ filename: config.db.eventsDbPath, autoload: false, timestampData: true , onload: function(err) { if (err) console.log('error loading solar db', err); else console.log('loaded events db'); } });
