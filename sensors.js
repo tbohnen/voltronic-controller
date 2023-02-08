@@ -1,5 +1,6 @@
 const { emitter } = require('./commands')
   const options = require('./options')
+  console.log(options.mqttSensors)
 const sensors = options.mqttSensors.map(s => ({ ...s, latestMessages: { }, power: null }))
 
   const getSensor = (name) => {
@@ -45,7 +46,14 @@ const update = (incomingSensor, topic, messageBuffer) => {
 
         }
     }
-  emitter.emit('sensor', sensor)
+
+    if (sensor.type === 'axpert') {
+      emitter.emit('status', JSON.parse(message))
+    }
+    else {
+      emitter.emit('sensor', sensor)
+    }
+
 }
 
 module.exports = {

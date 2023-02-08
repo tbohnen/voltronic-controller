@@ -4,7 +4,7 @@ const sensors = require('./sensors')
 
 
 const publish = (topic, msg) => {
-	//console.log(`publishing ${topic}`, msg)
+	console.log(`publishing ${topic}`, msg)
 	if (msg) { client.publish(topic, msg) }
 	else { client.publish(topic) }
 }
@@ -19,7 +19,7 @@ const init = () => {
 
 
 	
-	console.log('client connecting')
+  console.log(`client connecting ${options.username} to ${options.server}:${options.port}`)
 	client = mqtt.connect(`mqtt://${options.server}:${options.port}`, {
 		"username": options.username,
 		"password": options.password

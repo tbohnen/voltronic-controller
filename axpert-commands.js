@@ -4,7 +4,8 @@ const emitter = new EventEmitter();
 const options = require('./options')
 
 const executeRaw = (cmd) => {
-	console.log('executing', cmd);
+	console.log('not working, add to mqtt request', cmd);
+  return
 	return new Promise((resolve, reject) => { 
 		
 		exec(`./inverter_poller -r ${cmd}`, (err, stdout, stderr) => {
@@ -27,6 +28,8 @@ const executeRaw = (cmd) => {
 let status = null
 
 const getStatus = (cached = true) => {
+  console.log('not working')
+  return
 	return new Promise((resolve, reject) => { 
 		if (cached && status) {
 			resolve(status)
@@ -50,13 +53,13 @@ const getStatus = (cached = true) => {
 }
 
 const publishStatus = async () => {
-	const status = await getStatus(false)
-	emitter.emit("status", status);
+	//const status = await getStatus(false)
+	//emitter.emit("status", status);
 }
 
 
 
-setInterval(publishStatus, options.publishStatusSeconds * 1000);
+//setInterval(publishStatus, options.publishStatusSeconds * 1000);
 
 const toggleSource = async (source) => {
 	let code = "";

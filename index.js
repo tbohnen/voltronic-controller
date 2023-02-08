@@ -8,6 +8,7 @@ const db = require('./db')
 const influxService = require('./influx')
 const weather = require('./weather')
 const cors = require('cors')
+const options = require('./options')
 
 app.use(cors())
 
@@ -59,9 +60,9 @@ app.post('/source', async function(req, res) {
   res.send("").end()
 });
 
-app.listen(3000)
+app.listen(options.httpConfig.port)
 
-getStatus().then(s => console.log('status', s));
+//getStatus().then(s => console.log('status', s));
 
 const sleepMs = (ms) => {
 	return new Promise((resolve, reject) => {
